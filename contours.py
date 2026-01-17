@@ -9,15 +9,7 @@ from skimage.morphology import skeletonize
 from skimage.measure import find_contours
 
 from constants import BLOOD_CELLS_IMAGE_EASY
-from utils import visualize_image
-
-
-def load_image(path):
-    """
-    Wczytuje obraz z pliku.
-    """
-    img = io.imread(path)
-    return color.rgb2gray(img)
+from utils import load_image
 
 
 def preprocess_image(gray_image):
