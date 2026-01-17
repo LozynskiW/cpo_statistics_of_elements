@@ -4,11 +4,13 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import mean, sort
 from skimage.filters import gaussian, butterworth, threshold_multiotsu
 from skimage.measure import label
 
 from constants import HUMAN_CELLS_MITOSIS_EASY
-from utils import load_image, visualize_image
+from models import ImageObjectsStatistics
+from utils import load_image, visualize_image, visualize_labels_on_image
 
 
 # Amelia Carolina Sparavigna. Measuring the blood cells by means of an image segmentation. Philica,
@@ -25,7 +27,7 @@ def segment_image(image):
     return segmented
 
 
-def label_objects(binary_image):
+def label_objects(binary_image) -> list[tuple[int, list[float]]]:
     return label(binary_image)
 
 
@@ -53,16 +55,13 @@ def contour_perimeter(contour):
 
 def _initialize_size_dict(image: np.ndarray):
     """
-    Collect unique labels and initialize size dictionary.
-
-    Parameters
-    ----------
-    image : np.ndarray
-
-    Returns
-    -------
-    dict
-        label -> 0
+    Collect unique labels and initialize size dictionary containing label: size of object in pixels. Example dict:
+    {
+        label: size,
+        0: 12
+        1: 94
+        etc
+    }
     """
     if image.ndim != 2:
         raise ValueError("Image must be 2D")
@@ -81,22 +80,11 @@ def _measure_single_object(image: np.ndarray, label: int):
     """
     Measure size of a single labeled object using
     8-directional Carnot theorem and polygon area.
-
-    Parameters
-    ----------
-    image : np.ndarray
-    label : int
-
-    Returns
-    -------
-    dict
     """
 
     rows, cols = image.shape
 
-    # --------------------------------------------------
     # Locate object pixels and centroid
-    # --------------------------------------------------
     sum_y = 0.0
     sum_x = 0.0
     count = 0
@@ -114,9 +102,7 @@ def _measure_single_object(image: np.ndarray, label: int):
     cy = sum_y / count
     cx = sum_x / count
 
-    # --------------------------------------------------
     # Ray casting
-    # --------------------------------------------------
     angles = [k * math.pi / 4 for k in range(8)]
     radii = []
     max_radius = max(rows, cols)
@@ -145,9 +131,7 @@ def _measure_single_object(image: np.ndarray, label: int):
 
         radii.append(r)
 
-    # --------------------------------------------------
     # Carnot perimeter
-    # --------------------------------------------------
     delta_theta = math.pi / 4
     cos_dt = math.cos(delta_theta)
 
@@ -160,9 +144,7 @@ def _measure_single_object(image: np.ndarray, label: int):
         )
         perimeter += d
 
-    # --------------------------------------------------
     # Polygon area (shoelace)
-    # --------------------------------------------------
     vertices = []
     for k, r in enumerate(radii):
         theta = angles[k]
@@ -178,32 +160,24 @@ def _measure_single_object(image: np.ndarray, label: int):
 
     area = abs(area) * 0.5
 
-    return {
-        "centroid": (cy, cx),
-        "radii": radii,
-        "perimeter": perimeter,
-        "area": area
-    }
+    return area
+    # potentially all this can also be returned
+    # return {
+    #     "centroid": (cy, cx),
+    #     "radii": radii,
+    #     "perimeter": perimeter,
+    #     "area": area
+    # }
 
 
-def calculate_statistics(labeled_image):
-    """
-    Ekstrahuje cechy geometryczne i oblicza statystykę obiektów.
-    """
-    areas = _initialize_size_dict(labeled_image)
+def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
 
-    for label in areas.keys():
-        areas[label] = _measure_single_object(labeled_image, label)
+    areas_dict = _initialize_size_dict(labeled_image)
 
-    stats = {
-        "count": len(areas),
-        "areas": areas,
-        # "mean_area": np.mean(areas.items()) if areas else 0,
-        # "min_area": np.min(areas.items()) if areas else 0,
-        # "max_area": np.max(areas.items()) if areas else 0,
-    }
+    for label in areas_dict.keys():
+        areas_dict[label] = _measure_single_object(labeled_image, label)
 
-    return stats
+    return ImageObjectsStatistics(objs_areas=list(areas_dict.items()))
 
 # MAIN
 
@@ -217,9 +191,12 @@ image_segmented = segment_image(image_preprocessed)
 # visualize_image(image_segmented, title="segmented")
 
 labeled_image = label_objects(image_segmented)
+# visualize_labels_on_image(labeled_image, title="labeled_image")
+
 stats = calculate_statistics(labeled_image)
 end = time.time()
 elapsed = end - start
 
 print(f"Czas wykonania: {elapsed:.6f} s")
 print(stats)
+print(sort(stats.areas))

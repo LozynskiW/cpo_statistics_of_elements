@@ -1,6 +1,7 @@
 import io
 
 from matplotlib import pyplot as plt
+import skimage as ski
 from skimage import io, color
 
 
@@ -11,9 +12,18 @@ def load_image(path):
 
     return color.rgb2gray(img)
 
-def visualize_image(gray_image, title=""):
+def visualize_image(image, title=""):
     fig, ax = plt.subplots()
-    ax.imshow(gray_image, cmap='gray')
+    ax.imshow(image, cmap='gray')
     ax.set_title(title)
     ax.axis('off')
     plt.show()
+    plt.close(fig)
+
+def visualize_labels_on_image(labeled_image, title=""):
+    fig, ax = plt.subplots()
+    ax.imshow(ski.color.label2rgb(labeled_image, bg_label=0), cmap='gray')
+    ax.set_title(title)
+    ax.axis('off')
+    plt.show()
+    plt.close(fig)

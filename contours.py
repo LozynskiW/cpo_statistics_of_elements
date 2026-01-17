@@ -3,12 +3,13 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from skimage import io, color, filters
+from skimage import filters
 from skimage.filters import gaussian, threshold_otsu, butterworth
 from skimage.morphology import skeletonize
 from skimage.measure import find_contours
 
 from constants import BLOOD_CELLS_IMAGE_EASY
+from models import ImageObjectsStatistics
 from utils import load_image
 
 
@@ -63,30 +64,16 @@ def contour_perimeter(contour):
 
 
 def calculate_statistics(contours):
-    """
-    Ekstrahuje cechy geometryczne i oblicza statystykę obiektów.
-    """
     areas = [contour_area(c) for c in contours]
     perimeters = [contour_perimeter(c) for c in contours]
     equivalent_diameters = [np.sqrt(4 * a / np.pi) for a in areas]
 
-    stats = {
-        "count": len(contours),
-        "areas": areas,
-        "perimeters": perimeters,
-        "equivalent_diameters": equivalent_diameters,
-        "mean_area": np.mean(areas) if areas else 0,
-        "min_area": np.min(areas) if areas else 0,
-        "max_area": np.max(areas) if areas else 0,
-    }
+    objs_areas = {i + 1: v for i, v in enumerate(areas)}
 
-    return stats
+    return ImageObjectsStatistics(objs_areas=objs_areas.items())
 
 
 def visualize_contours(gray_image, contours):
-    """
-    Wyświetla wykryte kontury na obrazie.
-    """
     fig, ax = plt.subplots()
     ax.imshow(gray_image, cmap='gray')
 
