@@ -2,33 +2,52 @@ import copy
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import binary_fill_holes
 
 from skimage import filters
-from skimage.filters import gaussian, threshold_otsu, butterworth
-from skimage.morphology import skeletonize
+from skimage.filters import threshold_otsu, butterworth
+from skimage.morphology import closing, disk, erosion
 from skimage.measure import find_contours
 
-from constants import BLOOD_CELLS_IMAGE_EASY
+from constants import HUMAN_CELLS_MITOSIS_EASY
 from models import ImageObjectsStatistics
-from utils import load_image
+from utils import load_image, visualize_objects_statistics, visualize_image
 
 
-def preprocess_image(gray_image):
+def preprocess_image(gray_image, cutoff_frequency_ratio: float = 0.2, filter_order: int = 16, num_of_erosions: int = 1):
     """
     Based on High-Throughput Method for Automated Colony and Cell Counting by Digital Image Analysis Based on Edge Detection by Priya Choudhry
     """
-    gray_image_copy = copy.deepcopy(gray_image)
+    img = copy.deepcopy(gray_image)
 
-    sharpened = butterworth(gray_image_copy, 0.07, True, 8)
-    edges = filters.sobel(sharpened)
-    return gaussian(edges, sigma=0.1)
+    # 1. Redukcja szumu (low-pass)
+    img_smooth = butterworth(img, cutoff_frequency_ratio=cutoff_frequency_ratio, high_pass=False, order=filter_order)
+
+    for i in range(0, num_of_erosions):
+        img_smooth = erosion(img_smooth)
+
+    # 2. Normalizacja kontrastu
+    img_smooth = (img_smooth - img_smooth.min()) / (img_smooth.max() - img_smooth.min())
+
+    # 3. Detekcja krawędzi
+    edges = filters.sobel(img_smooth)
+
+    return edges
 
 
-def segment_image(image):
+def segment_image(image, disk_mask_size=1):
+    img = copy.deepcopy(image)
+
     threshold = threshold_otsu(image)
-    binary = image > threshold
+    binary_edges = img > threshold
 
-    return skeletonize(binary)
+    # 2. Domykanie konturów
+    closed = closing(binary_edges, disk(disk_mask_size))
+
+    # 3. Wypełnianie wnętrz obiektów
+    filled = binary_fill_holes(closed)
+
+    return filled
 
 
 def label_objects(binary_image):
@@ -65,8 +84,8 @@ def contour_perimeter(contour):
 
 def calculate_statistics(contours):
     areas = [contour_area(c) for c in contours]
-    perimeters = [contour_perimeter(c) for c in contours]
-    equivalent_diameters = [np.sqrt(4 * a / np.pi) for a in areas]
+    # perimeters = [contour_perimeter(c) for c in contours]
+    # equivalent_diameters = [np.sqrt(4 * a / np.pi) for a in areas]
 
     objs_areas = {i + 1: v for i, v in enumerate(areas)}
 
@@ -87,27 +106,21 @@ def visualize_contours(gray_image, contours):
 # MAIN
 
 start = time.time()
-image = load_image(BLOOD_CELLS_IMAGE_EASY)
-image_preprocessed = preprocess_image(image)
 
-# visualize_image(image_preprocessed, title="image_preprocessed")
-
-image_segmented = segment_image(image_preprocessed)
-# visualize_image(image_segmented, title="segmented")
-
+image = load_image(HUMAN_CELLS_MITOSIS_EASY)
+image_preprocessed = preprocess_image(image, cutoff_frequency_ratio= 0.2, filter_order = 16, num_of_erosions = 1)
+image_segmented = segment_image(image_preprocessed, disk_mask_size=1)
 labeled_image = label_objects(image_segmented)
 stats = calculate_statistics(labeled_image)
+
 end = time.time()
 elapsed = end - start
 
 print(f"Czas wykonania: {elapsed:.6f} s")
 print(stats)
 
-plt.hist(stats["areas"], bins=20)
-plt.xlabel("Pole obiektu [piksele]")
-plt.ylabel("Liczba obiektów")
-plt.title("Rozkład rozmiarów obiektów – metoda konturowa")
-plt.show()
-
+visualize_objects_statistics(stats=stats, bins_num=30, x_label="object area", title="Contour method")
+visualize_image(image_preprocessed, title="image_preprocessed")
+visualize_image(image_segmented, title="segmented")
 visualize_contours(image_segmented, labeled_image)
 visualize_contours(image, labeled_image)

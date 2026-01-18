@@ -6,8 +6,8 @@ from typing import Any
 @dataclass(init=False)
 class ImageObjectsStatistics:
     """
-    count: how many objects is on image
-    ares: list of all objects areas in pixels in format of list( tuple(obj_label, obj_size)...)
+    count: how many objects are on image
+    ares: list of all objects areas in pixels in format of: list[ tuple[Any, float], tuple[obj_label, obj_size]...]
     avg_area: average area, calculated as expected value when all probabilities are equal
     """
     objs_areas: list[tuple[Any, float]]

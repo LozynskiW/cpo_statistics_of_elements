@@ -1,9 +1,7 @@
-import skimage as ski
-
 RESOURCES_PATH = "resources"
 RESOURCES_PATH_RELATIVE = "../resources"
 
-BLOOD_CELLS_IMAGE_HARD = f"{RESOURCES_PATH}/blood_cells_hard_1.jfif"
-BLOOD_CELLS_IMAGE_EASY = f"{RESOURCES_PATH}/blood_cells_easy_1.jpg"
+BLOOD_CELLS_IMAGE_HARD = f"{RESOURCES_PATH}/blood_cells_hard.jfif"
 
 HUMAN_CELLS_MITOSIS_EASY = f"{RESOURCES_PATH}/human_cells_in_mitosis.png"
+HUMAN_CELLS_MITOSIS_BINS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 80, 100, 150, 200, 400, 1000, 2000, 3000, 4000, 5000, 6000, 7000]

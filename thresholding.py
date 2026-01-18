@@ -2,15 +2,13 @@ import copy
 import math
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
-from numpy import mean, sort
-from skimage.filters import gaussian, butterworth, threshold_multiotsu
+from skimage.filters import threshold_multiotsu
 from skimage.measure import label
 
-from constants import HUMAN_CELLS_MITOSIS_EASY
+from constants import HUMAN_CELLS_MITOSIS_EASY, HUMAN_CELLS_MITOSIS_BINS
 from models import ImageObjectsStatistics
-from utils import load_image, visualize_image, visualize_labels_on_image
+from utils import load_image, visualize_objects_statistics
 
 
 # Amelia Carolina Sparavigna. Measuring the blood cells by means of an image segmentation. Philica,
@@ -199,4 +197,5 @@ elapsed = end - start
 
 print(f"Czas wykonania: {elapsed:.6f} s")
 print(stats)
-print(sort(stats.areas))
+
+visualize_objects_statistics(stats=stats, bins_num=HUMAN_CELLS_MITOSIS_BINS, x_label="object area", title="Thresholding method")
