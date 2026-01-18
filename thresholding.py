@@ -8,11 +8,14 @@ from skimage.measure import label
 
 from constants import HUMAN_CELLS_MITOSIS_EASY, HUMAN_CELLS_MITOSIS_BINS
 from models import ImageObjectsStatistics
-from utils import load_image, visualize_objects_statistics
+from utils import load_image, visualize_objects_statistics, visualize_image, visualize_labels_on_image
 
 
-# Amelia Carolina Sparavigna. Measuring the blood cells by means of an image segmentation. Philica,
-# 2017. hal-01654006
+"""
+    Based on:
+    Measuring the blood cells by means of an image segmentation. Philica, 2017. hal-01654006
+    By Amelia Carolina Sparavigna.
+"""
 
 def preprocess_image(image):
     return copy.deepcopy(image)
@@ -31,8 +34,8 @@ def label_objects(binary_image) -> list[tuple[int, list[float]]]:
 
 def contour_area(contour):
     """
-    Oblicza pole powierzchni obiektu na podstawie konturu
-    (wzór na pole wielokąta).
+    Computes the object area based on its contour
+    using the polygon area formula.
     """
     x = contour[:, 1]
     y = contour[:, 0]
@@ -44,7 +47,7 @@ def contour_area(contour):
 
 def contour_perimeter(contour):
     """
-    Oblicza obwód obiektu na podstawie konturu.
+    Computes the object perimeter based on its contour.
     """
     diffs = np.diff(contour, axis=0)
     distances = np.sqrt((diffs ** 2).sum(axis=1))
@@ -53,12 +56,14 @@ def contour_perimeter(contour):
 
 def _initialize_size_dict(image: np.ndarray):
     """
-    Collect unique labels and initialize size dictionary containing label: size of object in pixels. Example dict:
+    Collects unique labels and initializes a size dictionary
+    in the form label -> object size in pixels.
+
+    Example:
     {
-        label: size,
-        0: 12
-        1: 94
-        etc
+        0: 12,
+        1: 94,
+        ...
     }
     """
     if image.ndim != 2:
@@ -76,13 +81,14 @@ def _initialize_size_dict(image: np.ndarray):
 
 def _measure_single_object(image: np.ndarray, label: int):
     """
-    Measure size of a single labeled object using
-    8-directional Carnot theorem and polygon area.
+    Measures the size of a single labeled object using
+    an 8-directional ray casting method (Carnot theorem)
+    and polygon area estimation.
     """
 
     rows, cols = image.shape
 
-    # Locate object pixels and centroid
+    # Locate object pixels and compute centroid
     sum_y = 0.0
     sum_x = 0.0
     count = 0
@@ -100,7 +106,7 @@ def _measure_single_object(image: np.ndarray, label: int):
     cy = sum_y / count
     cx = sum_x / count
 
-    # Ray casting
+    # Ray casting in 8 directions
     angles = [k * math.pi / 4 for k in range(8)]
     radii = []
     max_radius = max(rows, cols)
@@ -129,7 +135,7 @@ def _measure_single_object(image: np.ndarray, label: int):
 
         radii.append(r)
 
-    # Carnot perimeter
+    # Perimeter estimation using Carnot theorem
     delta_theta = math.pi / 4
     cos_dt = math.cos(delta_theta)
 
@@ -142,7 +148,7 @@ def _measure_single_object(image: np.ndarray, label: int):
         )
         perimeter += d
 
-    # Polygon area (shoelace)
+    # Polygon area estimation (shoelace formula)
     vertices = []
     for k, r in enumerate(radii):
         theta = angles[k]
@@ -159,7 +165,7 @@ def _measure_single_object(image: np.ndarray, label: int):
     area = abs(area) * 0.5
 
     return area
-    # potentially all this can also be returned
+    # Optionally, additional properties could be returned:
     # return {
     #     "centroid": (cy, cx),
     #     "radii": radii,
@@ -177,25 +183,28 @@ def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
 
     return ImageObjectsStatistics(objs_areas=list(areas_dict.items()))
 
+
 # MAIN
 
 start = time.time()
+
 image = load_image(HUMAN_CELLS_MITOSIS_EASY)
 image_preprocessed = preprocess_image(image)
-
-# visualize_image(image_preprocessed, title="image_preprocessed")
-
 image_segmented = segment_image(image_preprocessed)
-# visualize_image(image_segmented, title="segmented")
-
 labeled_image = label_objects(image_segmented)
-# visualize_labels_on_image(labeled_image, title="labeled_image")
-
 stats = calculate_statistics(labeled_image)
+
 end = time.time()
 elapsed = end - start
-
-print(f"Czas wykonania: {elapsed:.6f} s")
+print(f"Execution time: {elapsed:.6f} s")
 print(stats)
 
-visualize_objects_statistics(stats=stats, bins_num=HUMAN_CELLS_MITOSIS_BINS, x_label="object area", title="Thresholding method")
+visualize_objects_statistics(
+    stats=stats,
+    bins_num=HUMAN_CELLS_MITOSIS_BINS,
+    x_label="object area",
+    title="Thresholding method"
+)
+visualize_image(image_preprocessed, title="Preprocessed image")
+visualize_image(image_segmented, title="Segmented image")
+visualize_labels_on_image(labeled_image, title="Labeled image")
