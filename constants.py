@@ -1,6 +1,8 @@
 RESOURCES_PATH = "resources"
 RESOURCES_PATH_RELATIVE = "../resources"
 
+OUTCOMES_PATH_RELATIVE = "./outcomes"
+
 BLOOD_CELLS_IMAGE_HARD = f"{RESOURCES_PATH}/blood_cells_hard.jfif"
 
 HUMAN_CELLS_MITOSIS_EASY = f"{RESOURCES_PATH}/human_cells_in_mitosis.png"
