@@ -1,6 +1,6 @@
 ## About
 
-This project provides three different implementations of basic
+This project serves as a simple comparison of three different implementations of basic
 methods for automatic counting and determining the size distribution 
 of elements in images (automatic statistics of elements in microscopic images)
 
