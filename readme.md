@@ -1,13 +1,23 @@
-Wczytanie obrazu
+## About
 
-Konwersja do skali szarości
+This project provides three different implementations of basic
+methods for automatic counting and determining the size distribution 
+of elements in images (automatic statistics of elements in microscopic images)
 
-Filtracja (redukcja szumu)
+## Method Overview
 
-Segmentacja (wydzielenie obiektów)
+The processing pipeline follows these steps:
 
-Operacje morfologiczne
+1. **Preprocessing**
+   - grayscale image input
+   - enhancing image features to improve results of segmentation
 
-Etykietowanie obiektów
+2. **Segmentation**
+   - dividing image into object and background
+   - after segmentation image is binary
 
-Ekstrakcja cech i statystyka
+3. **Labeling**
+   - connected component labeling
+
+4. **Calculation of statistics**
+   - all statistics are in form of `ImageObjectsStatistics`
