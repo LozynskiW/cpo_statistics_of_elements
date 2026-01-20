@@ -2,6 +2,8 @@ import statistics
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
+
 
 @dataclass(init=False)
 class ImageObjectsStatistics:
@@ -12,7 +14,9 @@ class ImageObjectsStatistics:
     """
     objs_areas: list[tuple[Any, float]]
     areas: list[float]
+    pixel_size_um: float
     count: int
+
     min_area: float
     max_area: float
     avg_area: float
@@ -36,3 +40,6 @@ class ImageObjectsStatistics:
                 f"object size median in pixels = {self.std_dev}\n"
                 f"min object size in pixels = {self.min_area}\n"
                 f"max object size in pixels = {self.max_area}\n")
+
+    def get_area_um(self, pixel_size_um: float):
+        return self.areas * np.pow(pixel_size_um, 2)
