@@ -8,6 +8,11 @@ from constants import HUMAN_CELLS_MITOSIS_EASY, HUMAN_CELLS_MITOSIS_BINS
 from models import ImageObjectsStatistics
 from utils import load_image, visualize_objects_statistics, visualize_image, visualize_labels_on_image
 
+"""
+    Based on:
+    Automated Particle Size and Shape Determination Methods: Application to Proppant Optimization
+    By Dongjin Xu, Junting Wang, Zhiwen Li, Changheng Li, Yukai Guo, Xuyi Qiao and Yong Wang 
+"""
 
 def preprocess_image(image):
     return filters.gaussian(image, sigma=1.0)
@@ -41,20 +46,20 @@ def label_objects(image_segmented):
     )
 
 
-def calculate_statistics(
-    labeled_image
-) -> ImageObjectsStatistics:
+def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
 
     props = measure.regionprops(labeled_image)
     areas = []
 
     for p in props:
-        areas.append(p.area)
+        area_circle_px = np.pi * (p.equivalent_diameter / 2) ** 2
+        areas.append(area_circle_px)
         objs_areas = {i + 1: v for i, v in enumerate(areas)}
 
     return ImageObjectsStatistics(objs_areas=objs_areas.items())
 
 # MAIN
+visualize = False
 
 start = time.time()
 
@@ -69,12 +74,13 @@ elapsed = end - start
 print(f"Execution time: {elapsed:.6f} s")
 print(stats)
 
-visualize_objects_statistics(
-    stats=stats,
-    bins_num=HUMAN_CELLS_MITOSIS_BINS,
-    x_label="object area",
-    title="Watershed method"
-)
-visualize_image(image_preprocessed, title="Preprocessed image")
-visualize_image(image_segmented, title="Segmented image")
-visualize_labels_on_image(labeled_image, title="Labeled image")
+if visualize:
+    visualize_objects_statistics(
+        stats=stats,
+        bins_num=HUMAN_CELLS_MITOSIS_BINS,
+        x_label="object area",
+        title="Watershed method"
+    )
+    visualize_image(image_preprocessed, title="Preprocessed image")
+    visualize_image(image_segmented, title="Segmented image")
+    visualize_labels_on_image(labeled_image, title="Labeled image")

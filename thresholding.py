@@ -185,6 +185,7 @@ def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
 
 
 # MAIN
+visualize = False
 
 start = time.time()
 
@@ -199,12 +200,13 @@ elapsed = end - start
 print(f"Execution time: {elapsed:.6f} s")
 print(stats)
 
-visualize_objects_statistics(
-    stats=stats,
-    bins_num=HUMAN_CELLS_MITOSIS_BINS,
-    x_label="object area",
-    title="Thresholding method"
-)
-visualize_image(image_preprocessed, title="Preprocessed image")
-visualize_image(image_segmented, title="Segmented image")
-visualize_labels_on_image(labeled_image, title="Labeled image")
+if visualize:
+    visualize_objects_statistics(
+        stats=stats,
+        bins_num=HUMAN_CELLS_MITOSIS_BINS,
+        x_label="object area",
+        title="Thresholding method"
+    )
+    visualize_image(image_preprocessed, title="Preprocessed image")
+    visualize_image(image_segmented, title="Segmented image")
+    visualize_labels_on_image(labeled_image, title="Labeled image")

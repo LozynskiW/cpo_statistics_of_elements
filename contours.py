@@ -9,7 +9,7 @@ from skimage.filters import threshold_otsu, butterworth
 from skimage.morphology import closing, disk, erosion
 from skimage.measure import find_contours
 
-from constants import HUMAN_CELLS_MITOSIS_EASY
+from constants import HUMAN_CELLS_MITOSIS_EASY, HUMAN_CELLS_MITOSIS_BINS
 from models import ImageObjectsStatistics
 from utils import load_image, visualize_objects_statistics, visualize_image
 
@@ -123,6 +123,7 @@ def visualize_contours(gray_image, contours):
 
 
 # MAIN
+visualize = False
 
 start = time.time()
 
@@ -143,13 +144,14 @@ elapsed = end - start
 print(f"Execution time: {elapsed:.6f} s")
 print(stats)
 
-visualize_objects_statistics(
-    stats=stats,
-    bins_num=30,
-    x_label="object area",
-    title="Contour-based method"
-)
-visualize_image(image_preprocessed, title="Preprocessed image")
-visualize_image(image_segmented, title="Segmented image")
-visualize_contours(image_segmented, labeled_image)
-visualize_contours(image, labeled_image)
+if visualize:
+    visualize_objects_statistics(
+        stats=stats,
+        bins_num=HUMAN_CELLS_MITOSIS_BINS,
+        x_label="object area",
+        title="Contour-based method"
+    )
+    visualize_image(image_preprocessed, title="Preprocessed image")
+    visualize_image(image_segmented, title="Segmented image")
+    visualize_contours(image_segmented, labeled_image)
+    visualize_contours(image, labeled_image)

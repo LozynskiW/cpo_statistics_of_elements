@@ -36,11 +36,29 @@ def visualize_objects_statistics(stats: ImageObjectsStatistics, bins_num: int, x
     plt.hist(stats.areas, bins=bins_num)
     plt.xlabel(x_label)
     plt.ylabel("Number of objects for bin")
+    plt.xticks(bins_num)
     plt.title(title)
     plt.grid()
     plt.show()
     plt.close(fig)
 
+def visualize_multiple_objects_statistics(
+        label_stats_dict: dict[str, ImageObjectsStatistics],
+        bins_num: int,
+        x_label: str,
+        title: str
+):
+    fig, ax = plt.subplots()
+    for label in label_stats_dict.keys():
+        plt.hist(label_stats_dict[label].areas, bins=bins_num, label=label, alpha=0.5)
+    plt.xlabel(x_label)
+    plt.ylabel("Number of objects for bin")
+    plt.xticks(bins_num)
+    plt.title(title)
+    plt.grid()
+    plt.legend()
+    plt.show()
+    plt.close(fig)
 
 def save_image(image, title="", file_name="outcome", dpi=200):
     fig, ax = plt.subplots()
@@ -49,7 +67,6 @@ def save_image(image, title="", file_name="outcome", dpi=200):
     ax.axis('off')
     plt.savefig(fname=f'{OUTCOMES_PATH_RELATIVE}/{file_name}.png', dpi=dpi)
     plt.close(fig)
-
 
 def save_objects_statistics(
         stats: ImageObjectsStatistics,

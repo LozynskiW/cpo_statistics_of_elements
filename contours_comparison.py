@@ -1,8 +1,8 @@
 from matplotlib import pyplot as plt
 
 from constants import HUMAN_CELLS_MITOSIS_EASY, OUTCOMES_PATH_RELATIVE
-from contours import preprocess_image, segment_image, label_objects, calculate_statistics, visualize_contours
-from utils import load_image, visualize_objects_statistics, visualize_image, save_objects_statistics, save_image
+from contours import preprocess_image, segment_image, label_objects, calculate_statistics
+from utils import load_image, save_objects_statistics, save_image
 
 cutoff_frequency_ratios = [0.05, 0.2, 0.4]
 filter_orders = [8, 16, 24]
