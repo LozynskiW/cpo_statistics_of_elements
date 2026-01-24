@@ -1,5 +1,5 @@
 from constants import HUMAN_CELLS_MITOSIS_BINS
-from thresholding import stats as thresholding_stats
+from connected_regions import stats as thresholding_stats
 from contours import stats as contours_stats
 from watershed import stats as watershed_stats
 
