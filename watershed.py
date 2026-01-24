@@ -1,3 +1,4 @@
+import copy
 import time
 
 import numpy as np
@@ -15,7 +16,8 @@ from utils import load_image, visualize_objects_statistics, visualize_image, vis
 """
 
 def preprocess_image(image):
-    return filters.gaussian(image, sigma=1.0)
+    img = copy.deepcopy(image)
+    return filters.gaussian(img, sigma=1.0)
 
 
 def segment_image(image_preprocessed):
