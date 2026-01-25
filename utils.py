@@ -51,12 +51,13 @@ def visualize_multiple_objects_statistics(
     fig, ax = plt.subplots()
     for label in label_stats_dict.keys():
         plt.hist(label_stats_dict[label].areas, bins=bins_num, label=label, alpha=0.5)
-    plt.xlabel(x_label)
-    plt.ylabel("Number of objects for bin")
-    plt.xticks(bins_num)
-    plt.title(title)
+    plt.xlabel(x_label, fontsize=20)
+    plt.ylabel("Number of objects for bin", fontsize=20)
+    plt.xticks(bins_num, fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.title(title, fontsize=24)
     plt.grid()
-    plt.legend()
+    plt.legend(fontsize=16)
     plt.show()
     plt.close(fig)
 
