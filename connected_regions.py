@@ -10,7 +10,6 @@ from constants import HUMAN_CELLS_MITOSIS_EASY, HUMAN_CELLS_MITOSIS_BINS
 from models import ImageObjectsStatistics
 from utils import load_image, visualize_objects_statistics, visualize_image, visualize_labels_on_image
 
-
 """
     Based on:
     Measuring the blood cells by means of an image segmentation. Philica, 2017. hal-01654006
@@ -76,102 +75,81 @@ def _initialize_size_dict(image: np.ndarray):
         for x in range(cols):
             labels.add(int(image[y, x]))
 
-    return {label: 0 for label in labels}
+    labels_dict = {label: 0 for label in labels}
+    labels_dict.pop(0) # so that background is not label
+    return labels_dict
 
 
-def _measure_single_object(image: np.ndarray, label: int):
+def _measure_single_object(
+    image: np.ndarray,
+    label: int,
+    step: float = 0.25
+) -> float:
     """
-    Measures the size of a single labeled object using
-    an 8-directional ray casting method (Carnot theorem)
-    and polygon area estimation.
+    Measures object area using 8-directional ray casting
+    and Carnot-based triangular area estimation.
     """
 
     rows, cols = image.shape
 
-    # Locate object pixels and compute centroid
-    sum_y = 0.0
-    sum_x = 0.0
-    count = 0
-
-    for y in range(rows):
-        for x in range(cols):
-            if image[y, x] == label:
-                sum_y += y
-                sum_x += x
-                count += 1
-
-    if count == 0:
+    # --- centroid (pixel-accurate) ---
+    ys, xs = np.where(image == label)
+    if len(xs) == 0:
         raise ValueError(f"Label {label} not found")
 
-    cy = sum_y / count
-    cx = sum_x / count
+    cy = ys.mean()
+    cx = xs.mean()
 
-    # Ray casting in 8 directions
+    # --- ray casting ---
     angles = [k * math.pi / 4 for k in range(8)]
     radii = []
-    max_radius = max(rows, cols)
-    step = 0.5
+    boundary_points = []
+
+    max_radius = math.hypot(rows, cols)
 
     for theta in angles:
         sin_t = math.sin(theta)
         cos_t = math.cos(theta)
-        r = 0.0
 
-        while True:
+        r = 0.0
+        last_inside = None
+
+        while r < max_radius:
             y = cy + r * sin_t
             x = cx + r * cos_t
 
-            iy = int(round(y))
-            ix = int(round(x))
+            iy = int(math.floor(y))
+            ix = int(math.floor(x))
 
-            if (iy < 0 or iy >= rows or
+            if (
+                iy < 0 or iy >= rows or
                 ix < 0 or ix >= cols or
-                image[iy, ix] != label):
+                image[iy, ix] != label
+            ):
                 break
 
+            last_inside = (x, y)
             r += step
-            if r > max_radius:
-                break
 
-        radii.append(r)
+        if last_inside is None:
+            radii.append(0.0)
+            boundary_points.append((cx, cy))
+        else:
+            bx, by = last_inside
+            radii.append(math.hypot(bx - cx, by - cy))
+            boundary_points.append((bx, by))
 
-    # Perimeter estimation using Carnot theorem
+    # --- Carnot-based area estimation ---
     delta_theta = math.pi / 4
-    cos_dt = math.cos(delta_theta)
+    sin_dt = math.sin(delta_theta)
 
-    perimeter = 0.0
+    area_carnot = 0.0
     for i in range(8):
         r1 = radii[i]
         r2 = radii[(i + 1) % 8]
-        d = math.sqrt(
-            r1**2 + r2**2 - 2 * r1 * r2 * cos_dt
-        )
-        perimeter += d
+        area_carnot += 0.5 * r1 * r2 * sin_dt
 
-    # Polygon area estimation (shoelace formula)
-    vertices = []
-    for k, r in enumerate(radii):
-        theta = angles[k]
-        x = r * math.cos(theta)
-        y = r * math.sin(theta)
-        vertices.append((x, y))
-
-    area = 0.0
-    for i in range(8):
-        x1, y1 = vertices[i]
-        x2, y2 = vertices[(i + 1) % 8]
-        area += (x1 * y2 - x2 * y1)
-
-    area = abs(area) * 0.5
-
-    return area
-    # Optionally, additional properties could be returned:
-    # return {
-    #     "centroid": (cy, cx),
-    #     "radii": radii,
-    #     "perimeter": perimeter,
-    #     "area": area
-    # }
+    return area_carnot
 
 
 def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
@@ -205,7 +183,7 @@ if visualize:
         stats=stats,
         bins_num=HUMAN_CELLS_MITOSIS_BINS,
         x_label="object area",
-        title="Thresholding method"
+        title="Connected regions method"
     )
     visualize_image(image_preprocessed, title="Preprocessed image")
     visualize_image(image_segmented, title="Segmented image")
