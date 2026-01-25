@@ -2,9 +2,10 @@ import copy
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.ndimage import binary_fill_holes
+from scipy.ndimage import binary_fill_holes, morphology
+from scipy import ndimage as ndi
 
-from skimage import filters
+from skimage import filters, morphology, measure, segmentation
 from skimage.filters import threshold_otsu, butterworth
 from skimage.morphology import closing, disk, erosion
 from skimage.measure import find_contours
@@ -13,12 +14,13 @@ from constants import HUMAN_CELLS_MITOSIS_EASY, HUMAN_CELLS_MITOSIS_BINS
 from models import ImageObjectsStatistics
 from utils import load_image, visualize_objects_statistics, visualize_image
 
-
 """
     Based on:
     High-Throughput Method for Automated Colony and Cell Counting by Digital Image Analysis Based on Edge Detection
     by Priya Choudhry
 """
+visualize = False
+method_name = "Contours"
 
 def preprocess_image(
     gray_image,
@@ -53,30 +55,34 @@ def preprocess_image(
 def segment_image(image, disk_mask_size=1):
     img = copy.deepcopy(image)
 
-    # 1. Automatic thresholding (Otsu)
     threshold = threshold_otsu(image)
     binary_edges = img > threshold
 
-    # 2. Contour closing using morphological operations
     closed = closing(binary_edges, disk(disk_mask_size))
 
-    # 3. Filling object interiors
     filled = binary_fill_holes(closed)
 
     return filled
 
 
 def label_objects(binary_image):
-    """
-    Detects contours – each contour is treated as a separate object.
-    """
-    contours = find_contours(
-        binary_image,
+    distance = ndi.distance_transform_edt(binary_image)
+    local_maxi = morphology.local_maxima(distance)
+    markers = measure.label(local_maxi)
+
+    return segmentation.watershed(
+        -distance,
+        markers,
+        mask=binary_image
+    )
+
+
+def _calculate_contours(labeled_image):
+    return find_contours(
+        labeled_image,
         level=0.5,
         fully_connected='high'
     )
-    return contours
-
 
 def contour_area(contour):
     """
@@ -100,14 +106,14 @@ def contour_perimeter(contour):
     return distances.sum()
 
 
-def calculate_statistics(contours):
+def calculate_statistics(labeled_image):
+    contours = _calculate_contours(labeled_image)
+
     areas = [contour_area(c) for c in contours]
-    # perimeters = [contour_perimeter(c) for c in contours]
-    # equivalent_diameters = [np.sqrt(4 * a / np.pi) for a in areas]
 
     objs_areas = {i + 1: v for i, v in enumerate(areas)}
 
-    return ImageObjectsStatistics(objs_areas=objs_areas.items())
+    return ImageObjectsStatistics(method_name=method_name, objs_areas=objs_areas.items())
 
 
 def visualize_contours(gray_image, contours):
@@ -123,8 +129,6 @@ def visualize_contours(gray_image, contours):
 
 
 # MAIN
-visualize = False
-
 start = time.time()
 
 image = load_image(HUMAN_CELLS_MITOSIS_EASY)
@@ -153,5 +157,4 @@ if visualize:
     )
     visualize_image(image_preprocessed, title="Preprocessed image")
     visualize_image(image_segmented, title="Segmented image")
-    visualize_contours(image_segmented, labeled_image)
-    visualize_contours(image, labeled_image)
+    visualize_contours(image, _calculate_contours(labeled_image))

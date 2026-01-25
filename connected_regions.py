@@ -15,6 +15,8 @@ from utils import load_image, visualize_objects_statistics, visualize_image, vis
     Measuring the blood cells by means of an image segmentation. Philica, 2017. hal-01654006
     By Amelia Carolina Sparavigna.
 """
+visualize = True
+method_name = "Connected regions"
 
 def preprocess_image(image):
     return copy.deepcopy(image)
@@ -92,7 +94,7 @@ def _measure_single_object(
 
     rows, cols = image.shape
 
-    # --- centroid (pixel-accurate) ---
+    # --- centroid ---
     ys, xs = np.where(image == label)
     if len(xs) == 0:
         raise ValueError(f"Label {label} not found")
@@ -101,7 +103,10 @@ def _measure_single_object(
     cx = xs.mean()
 
     # --- ray casting ---
-    angles = [k * math.pi / 4 for k in range(8)]
+    num_rays = 16
+    delta_theta = 2 * math.pi / num_rays
+    angles = [k * delta_theta for k in range(num_rays)]
+
     radii = []
     boundary_points = []
 
@@ -121,10 +126,13 @@ def _measure_single_object(
             iy = int(math.floor(y))
             ix = int(math.floor(x))
 
-            if (
-                iy < 0 or iy >= rows or
-                ix < 0 or ix >= cols or
-                image[iy, ix] != label
+            if _is_point_not_within_boundary(
+                    index_x=ix,
+                    index_y=iy,
+                    image_array_rows=rows,
+                    image_array_cols=cols,
+                    image_array=image,
+                    obj_label=label
             ):
                 break
 
@@ -140,16 +148,21 @@ def _measure_single_object(
             boundary_points.append((bx, by))
 
     # --- Carnot-based area estimation ---
-    delta_theta = math.pi / 4
     sin_dt = math.sin(delta_theta)
 
     area_carnot = 0.0
-    for i in range(8):
+    for i in range(num_rays):
         r1 = radii[i]
-        r2 = radii[(i + 1) % 8]
+        r2 = radii[(i + 1) % num_rays]
         area_carnot += 0.5 * r1 * r2 * sin_dt
 
     return area_carnot
+
+
+def _is_point_not_within_boundary(index_x, index_y, image_array_rows, image_array_cols, image_array, obj_label) -> bool:
+    return (index_y < 0 or index_y >= image_array_rows
+            or index_x < 0 or index_x >= image_array_cols
+            or image_array[index_y, index_x] != obj_label)
 
 
 def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
@@ -159,12 +172,10 @@ def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
     for label in areas_dict.keys():
         areas_dict[label] = _measure_single_object(labeled_image, label)
 
-    return ImageObjectsStatistics(objs_areas=list(areas_dict.items()))
+    return ImageObjectsStatistics(method_name=method_name, objs_areas=list(areas_dict.items()))
 
 
 # MAIN
-visualize = False
-
 start = time.time()
 
 image = load_image(HUMAN_CELLS_MITOSIS_EASY)

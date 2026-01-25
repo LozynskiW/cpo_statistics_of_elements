@@ -12,6 +12,7 @@ class ImageObjectsStatistics:
     ares: list of all objects areas in pixels in format of: list[ tuple[Any, float], tuple[obj_label, obj_size]...]
     avg_area: average area, calculated as expected value when all probabilities are equal
     """
+    method_name: str
     objs_areas: list[tuple[Any, float]]
     areas: list[float]
     pixel_size_um: float
@@ -23,7 +24,8 @@ class ImageObjectsStatistics:
     std_dev: float
     median: float
 
-    def __init__(self, objs_areas: list[tuple[Any, float]]):
+    def __init__(self, method_name: str, objs_areas: list[tuple[Any, float]]):
+        self.method_name = method_name
         self.objs_areas = objs_areas
         self.count = len(self.objs_areas)
         self.areas = list(map(lambda x: x[1], self.objs_areas))
@@ -34,10 +36,11 @@ class ImageObjectsStatistics:
         self.median = statistics.median(self.areas)
 
     def __str__(self):
-        return (f"number_of_objects = {self.count}\n"
+        return (f"method = {self.method_name}\n"
+                f"number_of_objects = {self.count}\n"
                 f"average object size in pixels = {self.avg_area}\n"
                 f"object size standard deviation in pixels = {self.std_dev}\n"
-                f"object size median in pixels = {self.std_dev}\n"
+                f"object size median in pixels = {self.median}\n"
                 f"min object size in pixels = {self.min_area}\n"
                 f"max object size in pixels = {self.max_area}\n")
 

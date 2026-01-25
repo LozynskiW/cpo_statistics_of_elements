@@ -43,14 +43,15 @@ def visualize_objects_statistics(stats: ImageObjectsStatistics, bins_num: int, x
     plt.close(fig)
 
 def visualize_multiple_objects_statistics(
-        label_stats_dict: dict[str, ImageObjectsStatistics],
-        bins_num: int,
+        label_stats_dict: dict[str, dict],
         x_label: str,
-        title: str
+        title: str,
+        bins_num: int | list = 30
 ):
     fig, ax = plt.subplots()
     for label in label_stats_dict.keys():
-        plt.hist(label_stats_dict[label].areas, bins=bins_num, label=label, alpha=0.5)
+        data_to_plot = label_stats_dict[label]
+        plt.hist(data_to_plot["data"].areas, bins=bins_num, label=label, alpha=0.5, edgecolor='black', hatch=data_to_plot["hatch"])
     plt.xlabel(x_label, fontsize=20)
     plt.ylabel("Number of objects for bin", fontsize=20)
     plt.xticks(bins_num, fontsize=16)

@@ -14,6 +14,8 @@ from utils import load_image, visualize_objects_statistics, visualize_image, vis
     Automated Particle Size and Shape Determination Methods: Application to Proppant Optimization
     By Dongjin Xu, Junting Wang, Zhiwen Li, Changheng Li, Yukai Guo, Xuyi Qiao and Yong Wang 
 """
+visualize = False
+method_name = "Watershed"
 
 def preprocess_image(image):
     img = copy.deepcopy(image)
@@ -58,11 +60,9 @@ def calculate_statistics(labeled_image) -> ImageObjectsStatistics:
         areas.append(area_circle_px)
         objs_areas = {i + 1: v for i, v in enumerate(areas)}
 
-    return ImageObjectsStatistics(objs_areas=objs_areas.items())
+    return ImageObjectsStatistics(method_name=method_name, objs_areas=objs_areas.items())
 
 # MAIN
-visualize = False
-
 start = time.time()
 
 image = load_image(HUMAN_CELLS_MITOSIS_EASY)

@@ -6,9 +6,9 @@ from watershed import stats as watershed_stats
 from utils import visualize_multiple_objects_statistics
 
 label_stats_dict = {
-    "thresholding": thresholding_stats,
-    "contours": contours_stats,
-    "watershed": watershed_stats
+    "connected-regions": {"data": thresholding_stats, "hatch": "."},
+    "contours": {"data": contours_stats, "hatch": "/"},
+    "watershed": {"data": watershed_stats, "hatch": "\\"}
 }
 
 visualize_multiple_objects_statistics(
