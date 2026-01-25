@@ -1,4 +1,4 @@
-from constants import HUMAN_CELLS_MITOSIS_BINS
+from constants import HUMAN_CELLS_MITOSIS_EQUAL_BINS
 from connected_regions import stats as thresholding_stats
 from contours import stats as contours_stats
 from watershed import stats as watershed_stats
@@ -13,7 +13,7 @@ label_stats_dict = {
 
 visualize_multiple_objects_statistics(
     label_stats_dict=label_stats_dict,
-    bins_num=HUMAN_CELLS_MITOSIS_BINS,
+    bins_num=HUMAN_CELLS_MITOSIS_EQUAL_BINS,
     x_label="object area",
     title="Methods comparison"
 )

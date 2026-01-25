@@ -15,7 +15,7 @@ from utils import load_image, visualize_objects_statistics, visualize_image, vis
     Measuring the blood cells by means of an image segmentation. Philica, 2017. hal-01654006
     By Amelia Carolina Sparavigna.
 """
-visualize = True
+visualize = False
 method_name = "Connected regions"
 
 def preprocess_image(image):
